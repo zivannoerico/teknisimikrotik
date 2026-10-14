@@ -66,7 +66,100 @@
 
             <nav class="hidden items-center gap-1 xl:flex" aria-label="Navigasi utama">
                 @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}" class="nav-link" @if (request()->routeIs($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @if ($item['label'] === 'Layanan')
+                        {{-- Dropdown Layanan Compact 2-Kolom --}}
+                        <div class="relative group/nav" id="desktop-services-dropdown">
+                            <button type="button"
+                                    id="desktop-services-trigger"
+                                    class="nav-link inline-flex items-center gap-1.5 cursor-pointer {{ request()->routeIs('services.*') ? 'text-brand-700 font-bold bg-brand-50' : '' }}"
+                                    aria-expanded="false"
+                                    aria-haspopup="true"
+                                    aria-controls="services-menu-dropdown">
+                                <span>Layanan</span>
+                                <x-icon name="chevron-down" id="desktop-services-chevron" class="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180 group-focus-within/nav:rotate-180 group-[.is-open]/nav:rotate-180 text-slate-500" />
+                            </button>
+
+                            {{-- Invisible hover bridge & 2-column compact dropdown panel (w-[500px]) --}}
+                            <div class="absolute left-0 top-full pt-2 w-[500px] transition-all duration-200 opacity-0 pointer-events-none translate-y-2 group-hover/nav:opacity-100 group-hover/nav:pointer-events-auto group-hover/nav:translate-y-0 group-focus-within/nav:opacity-100 group-focus-within/nav:pointer-events-auto group-focus-within/nav:translate-y-0 group-[.is-open]/nav:opacity-100 group-[.is-open]/nav:pointer-events-auto group-[.is-open]/nav:translate-y-0 z-50">
+                                <div id="services-menu-dropdown" class="bg-white rounded-2xl border border-slate-200/90 shadow-xl p-3 grid grid-cols-2 gap-1 text-left">
+                                    @php
+                                        $chunks = $navServices->chunk(5);
+                                    @endphp
+                                    <div class="space-y-0.5">
+                                        @foreach($chunks->get(0, collect()) as $s)
+                                            <a href="{{ route('services.show', $s->slug) }}"
+                                               class="group/item flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/70 text-blue-700 font-semibold' : 'text-slate-800' }}">
+                                                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
+                                                    @if(str_contains($s->slug, 'load-balancing'))
+                                                        <x-icon name="network" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'bandwidth') || str_contains($s->slug, 'qos'))
+                                                        <x-icon name="gauge" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'hotspot'))
+                                                        <x-icon name="wifi" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'vpn') || str_contains($s->slug, 'firewall'))
+                                                        <x-icon name="shield" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'vlan'))
+                                                        <x-icon name="layers" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'maintenance') || str_contains($s->slug, 'monitoring'))
+                                                        <x-icon name="clock" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'dasar') || str_contains($s->slug, 'awal'))
+                                                        <x-icon name="cpu" class="h-3.5 w-3.5" />
+                                                    @else
+                                                        <x-icon name="topology" class="h-3.5 w-3.5" />
+                                                    @endif
+                                                </span>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-xs font-semibold leading-snug block group-hover/item:text-blue-700 transition-colors">
+                                                        {{ $s->title }}
+                                                    </span>
+                                                    @if(!empty($s->price_start))
+                                                        <span class="text-[10px] text-slate-400 block font-mono">Mulai {{ $s->price_start }}</span>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="space-y-0.5 border-l border-slate-100 pl-1">
+                                        @foreach($chunks->get(1, collect()) as $s)
+                                            <a href="{{ route('services.show', $s->slug) }}"
+                                               class="group/item flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/70 text-blue-700 font-semibold' : 'text-slate-800' }}">
+                                                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
+                                                    @if(str_contains($s->slug, 'load-balancing'))
+                                                        <x-icon name="network" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'bandwidth') || str_contains($s->slug, 'qos'))
+                                                        <x-icon name="gauge" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'hotspot'))
+                                                        <x-icon name="wifi" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'vpn') || str_contains($s->slug, 'firewall'))
+                                                        <x-icon name="shield" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'vlan'))
+                                                        <x-icon name="layers" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'maintenance') || str_contains($s->slug, 'monitoring'))
+                                                        <x-icon name="clock" class="h-3.5 w-3.5" />
+                                                    @elseif(str_contains($s->slug, 'dasar') || str_contains($s->slug, 'awal'))
+                                                        <x-icon name="cpu" class="h-3.5 w-3.5" />
+                                                    @else
+                                                        <x-icon name="topology" class="h-3.5 w-3.5" />
+                                                    @endif
+                                                </span>
+                                                <div class="min-w-0 flex-1">
+                                                    <span class="text-xs font-semibold leading-snug block group-hover/item:text-blue-700 transition-colors">
+                                                        {{ $s->title }}
+                                                    </span>
+                                                    @if(!empty($s->price_start))
+                                                        <span class="text-[10px] text-slate-400 block font-mono">Mulai {{ $s->price_start }}</span>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route($item['route']) }}" class="nav-link" @if (request()->routeIs($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @endif
                 @endforeach
             </nav>
 
@@ -85,7 +178,31 @@
         <div id="mobile-menu" hidden class="max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-t border-slate-200 bg-white shadow-lg xl:hidden">
             <nav class="wrap py-4" aria-label="Navigasi seluler">
                 @foreach ($navItems as $item)
-                    <a href="{{ route($item['route']) }}" class="nav-link-mobile" @if (request()->routeIs($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @if ($item['label'] === 'Layanan')
+                        <div class="border-b border-slate-100">
+                            <button type="button"
+                                    id="mobile-services-button"
+                                    class="flex items-center justify-between w-full min-h-[3rem] px-2 text-left font-heading text-base font-bold text-navy-900 select-none cursor-pointer"
+                                    aria-expanded="false"
+                                    aria-controls="mobile-services-submenu">
+                                <span class="{{ request()->routeIs('services.*') ? 'text-blue-700' : '' }}">Layanan</span>
+                                <x-icon name="chevron-down" id="mobile-services-chevron" class="h-4 w-4 text-slate-400 transition-transform duration-200" />
+                            </button>
+                            <div id="mobile-services-submenu" hidden class="pb-3 pt-1 space-y-1 pl-2">
+                                @foreach($navServices as $s)
+                                    <a href="{{ route('services.show', $s->slug) }}"
+                                       class="flex items-center justify-between py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 hover:text-blue-700 hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50 text-blue-700' : '' }}">
+                                        <span class="truncate pr-2">{{ $s->title }}</span>
+                                        @if(!empty($s->price_start))
+                                            <span class="text-[10px] text-slate-400 font-mono shrink-0">{{ $s->price_start }}</span>
+                                        @endif
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route($item['route']) }}" class="nav-link-mobile" @if (request()->routeIs($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                    @endif
                 @endforeach
                 <div class="grid gap-3 pb-4 pt-6">
                     <a href="{{ $waLink($waDefaultMessage) }}" target="_blank" rel="noopener noreferrer" class="btn btn-wa btn-lg btn-block inline-flex items-center justify-center gap-2">

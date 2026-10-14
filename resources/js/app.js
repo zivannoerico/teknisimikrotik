@@ -48,6 +48,50 @@ bindToggle(document.getElementById('mobile-menu-button'), document.getElementByI
     },
 });
 
+// Desktop Layanan dropdown click/keyboard toggle
+(() => {
+    const dropdown = document.getElementById('desktop-services-dropdown');
+    const trigger = document.getElementById('desktop-services-trigger');
+    if (!dropdown || !trigger) return;
+
+    trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isOpen = dropdown.classList.toggle('is-open');
+        trigger.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) {
+            dropdown.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            dropdown.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+})();
+
+// Mobile menu Layanan collapsible submenu
+(() => {
+    const btn = document.getElementById('mobile-services-button');
+    const submenu = document.getElementById('mobile-services-submenu');
+    const chevron = document.getElementById('mobile-services-chevron');
+    if (!btn || !submenu) return;
+
+    btn.addEventListener('click', () => {
+        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!isOpen));
+        submenu.hidden = isOpen;
+        if (chevron) {
+            chevron.classList.toggle('rotate-180', !isOpen);
+        }
+    });
+})();
+
 // Admin sidebar (mobile).
 (() => {
     const sidebar = document.getElementById('admin-sidebar');

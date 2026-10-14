@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Service;
 use App\Models\Setting;
 use Closure;
 use Illuminate\Support\Facades\Schema;
@@ -39,6 +40,16 @@ class ViewServiceProvider extends ServiceProvider
                 return 'https://wa.me/'.$waNumber.($message ? '?text='.rawurlencode($message) : '');
             };
         });
+
+        $this->app->scoped('site.nav-services', function () {
+            try {
+                return Schema::hasTable('services')
+                    ? Service::where('is_active', true)->orderBy('sort_order')->get()
+                    : collect();
+            } catch (\Throwable $e) {
+                return collect();
+            }
+        });
     }
 
     /**
@@ -53,6 +64,7 @@ class ViewServiceProvider extends ServiceProvider
         View::composer('*', function ($view) {
             $view->with('siteSettings', $this->app->make('site.settings'));
             $view->with('waLink', $this->app->make('site.whatsapp-link'));
+            $view->with('navServices', $this->app->make('site.nav-services'));
         });
     }
 }
