@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Service;
+use Illuminate\View\View;
+
+class ServiceController extends Controller
+{
+    public function index(): View
+    {
+        $services = Service::where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('pages.services.index', compact('services'));
+    }
+
+    public function show(string $slug): View
+    {
+        $service = Service::where('slug', $slug)->where('is_active', true)->firstOrFail();
+        $otherServices = Service::where('id', '!=', $service->id)->where('is_active', true)->take(3)->get();
+
+        return view('pages.services.show', compact('service', 'otherServices'));
+    }
+}
