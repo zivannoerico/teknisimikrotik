@@ -45,25 +45,75 @@ bindToggle(document.getElementById('mobile-menu-button'), document.getElementByI
     onChange: (open) => {
         document.getElementById('icon-menu')?.classList.toggle('hidden', open);
         document.getElementById('icon-close')?.classList.toggle('hidden', !open);
+        if (!open) {
+            const sub = document.getElementById('mobile-services-submenu');
+            const subBtn = document.getElementById('mobile-services-button');
+            const subChev = document.getElementById('mobile-services-chevron');
+            if (sub && subBtn) {
+                sub.hidden = true;
+                subBtn.setAttribute('aria-expanded', 'false');
+                if (subChev) subChev.classList.remove('rotate-180');
+            }
+            const compactView = document.getElementById('mobile-services-compact');
+            const expandedView = document.getElementById('mobile-services-expanded');
+            const toggleText = document.getElementById('mobile-services-toggle-text');
+            const chevronDown = document.getElementById('mobile-services-toggle-chevron-down');
+            const chevronUp = document.getElementById('mobile-services-toggle-chevron-up');
+            if (compactView) compactView.classList.remove('hidden');
+            if (expandedView) expandedView.classList.add('hidden');
+            if (toggleText) toggleText.textContent = 'Lihat Lainnya';
+            if (chevronDown) chevronDown.classList.remove('hidden');
+            if (chevronUp) chevronUp.classList.add('hidden');
+        }
     },
 });
 
-// Desktop Layanan dropdown click/keyboard toggle
+// Desktop Layanan dropdown click/hover/mode toggle
 (() => {
     const dropdown = document.getElementById('desktop-services-dropdown');
     const trigger = document.getElementById('desktop-services-trigger');
+    const expandBtn = document.getElementById('desktop-services-expand-btn');
+    const collapseBtn = document.getElementById('desktop-services-collapse-btn');
     if (!dropdown || !trigger) return;
+
+    const setMode = (mode) => {
+        dropdown.setAttribute('data-mode', mode);
+    };
 
     trigger.addEventListener('click', (e) => {
         e.preventDefault();
         const isOpen = dropdown.classList.toggle('is-open');
         trigger.setAttribute('aria-expanded', String(isOpen));
+        if (!isOpen) {
+            setMode('compact');
+        }
+    });
+
+    if (expandBtn) {
+        expandBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode('expanded');
+        });
+    }
+
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMode('compact');
+        });
+    }
+
+    dropdown.addEventListener('mouseleave', () => {
+        setMode('compact');
     });
 
     document.addEventListener('click', (e) => {
         if (!dropdown.contains(e.target)) {
             dropdown.classList.remove('is-open');
             trigger.setAttribute('aria-expanded', 'false');
+            setMode('compact');
         }
     });
 
@@ -71,16 +121,34 @@ bindToggle(document.getElementById('mobile-menu-button'), document.getElementByI
         if (e.key === 'Escape') {
             dropdown.classList.remove('is-open');
             trigger.setAttribute('aria-expanded', 'false');
+            setMode('compact');
         }
     });
 })();
 
-// Mobile menu Layanan collapsible submenu
+// Mobile menu Layanan collapsible submenu with Compact/Expanded mode
 (() => {
     const btn = document.getElementById('mobile-services-button');
     const submenu = document.getElementById('mobile-services-submenu');
     const chevron = document.getElementById('mobile-services-chevron');
+    const toggleBtn = document.getElementById('mobile-services-toggle-btn');
+    const toggleText = document.getElementById('mobile-services-toggle-text');
+    const chevronDown = document.getElementById('mobile-services-toggle-chevron-down');
+    const chevronUp = document.getElementById('mobile-services-toggle-chevron-up');
+    const compactView = document.getElementById('mobile-services-compact');
+    const expandedView = document.getElementById('mobile-services-expanded');
     if (!btn || !submenu) return;
+
+    let isExpandedMode = false;
+
+    const setMobileMode = (expanded) => {
+        isExpandedMode = expanded;
+        if (compactView) compactView.classList.toggle('hidden', expanded);
+        if (expandedView) expandedView.classList.toggle('hidden', !expanded);
+        if (toggleText) toggleText.textContent = expanded ? 'Tampilkan Lebih Sedikit' : 'Lihat Lainnya';
+        if (chevronDown) chevronDown.classList.toggle('hidden', expanded);
+        if (chevronUp) chevronUp.classList.toggle('hidden', !expanded);
+    };
 
     btn.addEventListener('click', () => {
         const isOpen = btn.getAttribute('aria-expanded') === 'true';
@@ -89,7 +157,19 @@ bindToggle(document.getElementById('mobile-menu-button'), document.getElementByI
         if (chevron) {
             chevron.classList.toggle('rotate-180', !isOpen);
         }
+        if (isOpen) {
+            // When closing accordion, reset to compact
+            setMobileMode(false);
+        }
     });
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setMobileMode(!isExpandedMode);
+        });
+    }
 })();
 
 // Admin sidebar (mobile).

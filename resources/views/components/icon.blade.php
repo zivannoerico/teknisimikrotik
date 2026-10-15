@@ -40,6 +40,8 @@
 <svg {{ $attributes->merge(['class' => $class]) }} viewBox="0 0 24 24" {!! $stroke !!} aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
 @elseif ($name === 'chevron-down')
 <svg {{ $attributes->merge(['class' => $class]) }} viewBox="0 0 24 24" {!! $stroke !!} aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>
+@elseif ($name === 'chevron-up')
+<svg {{ $attributes->merge(['class' => $class]) }} viewBox="0 0 24 24" {!! $stroke !!} aria-hidden="true" focusable="false"><path d="M18 15l-6-6-6 6"/></svg>
 @elseif ($name === 'chevron-right')
 <svg {{ $attributes->merge(['class' => $class]) }} viewBox="0 0 24 24" {!! $stroke !!} aria-hidden="true" focusable="false"><path d="M9 18l6-6-6-6"/></svg>
 @elseif ($name === 'wifi')

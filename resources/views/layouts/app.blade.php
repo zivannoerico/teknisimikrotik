@@ -26,6 +26,33 @@
         ['label' => 'Tanya Jawab (FAQ)', 'route' => 'faq'],
     ];
     $metaDescription = trim($__env->yieldContent('meta_description')) ?: 'Jasa setting MikroTik dan manajemen jaringan untuk bisnis, warnet, RT/RW Net, dan kebutuhan jaringan profesional. Konsultasi via WhatsApp.';
+    $serviceShortNames = [
+        'multi-isp-load-balancing-failover' => 'Load Balancing',
+        'bandwidth-management-qos' => 'Manajemen Bandwidth',
+        'hotspot-billing-voucher' => 'Hotspot & Voucher',
+        'vpn-antar-cabang-remote-access' => 'VPN Jaringan',
+        'firewall-hardening-security' => 'Keamanan Firewall',
+        'maintenance-jaringan-bulanan' => 'Maintenance Jaringan',
+        'setting-dasar-konfigurasi-awal' => 'Konfigurasi RouterOS',
+        'vlan-segmentasi-jaringan' => 'VLAN & Segmentasi',
+        'rtrw-net-pppoe-server-billing' => 'RT/RW Net & PPPoE',
+        'monitoring-telegram-setting-olt' => 'Monitoring & OLT',
+    ];
+    $getShortTitle = function ($s) use ($serviceShortNames): string {
+        return $serviceShortNames[$s->slug] ?? $s->title;
+    };
+    $getServiceIcon = function ($s): string {
+        $slug = $s->slug ?? '';
+        if (str_contains($slug, 'load-balancing')) return 'network';
+        if (str_contains($slug, 'bandwidth') || str_contains($slug, 'qos')) return 'gauge';
+        if (str_contains($slug, 'hotspot')) return 'wifi';
+        if (str_contains($slug, 'vpn') || str_contains($slug, 'firewall')) return 'shield';
+        if (str_contains($slug, 'vlan')) return 'layers';
+        if (str_contains($slug, 'maintenance') || str_contains($slug, 'monitoring')) return 'clock';
+        if (str_contains($slug, 'dasar') || str_contains($slug, 'awal')) return 'cpu';
+        if (str_contains($slug, 'rtrw')) return 'router';
+        return 'topology';
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -48,6 +75,27 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
+    <style>
+        #desktop-services-dropdown[data-mode="compact"] #services-menu-dropdown {
+            width: 380px;
+        }
+        #desktop-services-dropdown[data-mode="compact"] .services-compact-view {
+            display: block;
+        }
+        #desktop-services-dropdown[data-mode="compact"] .services-expanded-view {
+            display: none;
+        }
+
+        #desktop-services-dropdown[data-mode="expanded"] #services-menu-dropdown {
+            width: 560px;
+        }
+        #desktop-services-dropdown[data-mode="expanded"] .services-compact-view {
+            display: none;
+        }
+        #desktop-services-dropdown[data-mode="expanded"] .services-expanded-view {
+            display: block;
+        }
+    </style>
 </head>
 <body class="flex min-h-screen flex-col overflow-x-hidden">
     <a href="#konten" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-lg focus:bg-white focus:px-4 focus:py-3 focus:font-semibold focus:text-navy-900 focus:shadow-lg">Lewati ke konten</a>
@@ -67,8 +115,8 @@
             <nav class="hidden items-center gap-1 xl:flex" aria-label="Navigasi utama">
                 @foreach ($navItems as $item)
                     @if ($item['label'] === 'Layanan')
-                        {{-- Dropdown Layanan Compact 2-Kolom --}}
-                        <div class="relative group/nav" id="desktop-services-dropdown">
+                        {{-- Dropdown Layanan: Dua Mode Tampilan (Compact & Expanded) --}}
+                        <div class="relative group/nav" id="desktop-services-dropdown" data-mode="compact">
                             <button type="button"
                                     id="desktop-services-trigger"
                                     class="nav-link inline-flex items-center gap-1.5 cursor-pointer {{ request()->routeIs('services.*') ? 'text-brand-700 font-bold bg-brand-50' : '' }}"
@@ -79,80 +127,98 @@
                                 <x-icon name="chevron-down" id="desktop-services-chevron" class="h-3.5 w-3.5 transition-transform duration-200 group-hover/nav:rotate-180 group-focus-within/nav:rotate-180 group-[.is-open]/nav:rotate-180 text-slate-500" />
                             </button>
 
-                            {{-- Invisible hover bridge & 2-column compact dropdown panel (w-[500px]) --}}
-                            <div class="absolute left-0 top-full pt-2 w-[500px] transition-all duration-200 opacity-0 pointer-events-none translate-y-2 group-hover/nav:opacity-100 group-hover/nav:pointer-events-auto group-hover/nav:translate-y-0 group-focus-within/nav:opacity-100 group-focus-within/nav:pointer-events-auto group-focus-within/nav:translate-y-0 group-[.is-open]/nav:opacity-100 group-[.is-open]/nav:pointer-events-auto group-[.is-open]/nav:translate-y-0 z-50">
-                                <div id="services-menu-dropdown" class="bg-white rounded-2xl border border-slate-200/90 shadow-xl p-3 grid grid-cols-2 gap-1 text-left">
+                            {{-- Invisible hover bridge & single dropdown panel that resizes between compact (380px) and expanded (560px) --}}
+                            <div id="desktop-services-panel-wrapper"
+                                 class="absolute left-0 top-full pt-2 transition-all duration-200 opacity-0 pointer-events-none translate-y-2 group-hover/nav:opacity-100 group-hover/nav:pointer-events-auto group-hover/nav:translate-y-0 group-focus-within/nav:opacity-100 group-focus-within/nav:pointer-events-auto group-focus-within/nav:translate-y-0 group-[.is-open]/nav:opacity-100 group-[.is-open]/nav:pointer-events-auto group-[.is-open]/nav:translate-y-0 z-50">
+                                <div id="services-menu-dropdown" class="bg-white rounded-2xl border border-slate-200/90 shadow-xl p-3 text-left transition-[width] duration-200 ease-out">
                                     @php
                                         $chunks = $navServices->chunk(5);
                                     @endphp
-                                    <div class="space-y-0.5">
-                                        @foreach($chunks->get(0, collect()) as $s)
-                                            <a href="{{ route('services.show', $s->slug) }}"
-                                               class="group/item flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/70 text-blue-700 font-semibold' : 'text-slate-800' }}">
-                                                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
-                                                    @if(str_contains($s->slug, 'load-balancing'))
-                                                        <x-icon name="network" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'bandwidth') || str_contains($s->slug, 'qos'))
-                                                        <x-icon name="gauge" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'hotspot'))
-                                                        <x-icon name="wifi" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'vpn') || str_contains($s->slug, 'firewall'))
-                                                        <x-icon name="shield" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'vlan'))
-                                                        <x-icon name="layers" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'maintenance') || str_contains($s->slug, 'monitoring'))
-                                                        <x-icon name="clock" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'dasar') || str_contains($s->slug, 'awal'))
-                                                        <x-icon name="cpu" class="h-3.5 w-3.5" />
-                                                    @else
-                                                        <x-icon name="topology" class="h-3.5 w-3.5" />
-                                                    @endif
-                                                </span>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-xs font-semibold leading-snug block group-hover/item:text-blue-700 transition-colors">
-                                                        {{ $s->title }}
-                                                    </span>
-                                                    @if(!empty($s->price_start))
-                                                        <span class="text-[10px] text-slate-400 block font-mono">Mulai {{ $s->price_start }}</span>
-                                                    @endif
-                                                </div>
-                                            </a>
-                                        @endforeach
+
+                                    {{-- 1. MODE COMPACT: Dua kolom, 5 per kolom, hanya nama singkat --}}
+                                    <div class="services-compact-view">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="space-y-1">
+                                                @foreach($chunks->get(0, collect()) as $s)
+                                                    <a href="{{ route('services.show', $s->slug) }}"
+                                                       class="group/item flex items-center px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/80 text-blue-700' : 'text-slate-700 hover:text-blue-700 hover:bg-slate-50' }}">
+                                                        <span class="truncate block">{{ $getShortTitle($s) }}</span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+
+                                            <div class="space-y-1 border-l border-slate-100 pl-2">
+                                                @foreach($chunks->get(1, collect()) as $s)
+                                                    <a href="{{ route('services.show', $s->slug) }}"
+                                                       class="group/item flex items-center px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/80 text-blue-700' : 'text-slate-700 hover:text-blue-700 hover:bg-slate-50' }}">
+                                                        <span class="truncate block">{{ $getShortTitle($s) }}</span>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+
+                                        {{-- Tombol Lihat Lainnya di bagian bawah compact --}}
+                                        <div class="border-t border-slate-100 mt-2 pt-2 px-1">
+                                            <button type="button"
+                                                    id="desktop-services-expand-btn"
+                                                    class="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold text-slate-500 hover:text-blue-700 hover:bg-slate-50 transition-colors cursor-pointer select-none">
+                                                <span>Lihat Lainnya</span>
+                                                <x-icon name="chevron-down" class="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div class="space-y-0.5 border-l border-slate-100 pl-1">
-                                        @foreach($chunks->get(1, collect()) as $s)
-                                            <a href="{{ route('services.show', $s->slug) }}"
-                                               class="group/item flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/70 text-blue-700 font-semibold' : 'text-slate-800' }}">
-                                                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
-                                                    @if(str_contains($s->slug, 'load-balancing'))
-                                                        <x-icon name="network" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'bandwidth') || str_contains($s->slug, 'qos'))
-                                                        <x-icon name="gauge" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'hotspot'))
-                                                        <x-icon name="wifi" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'vpn') || str_contains($s->slug, 'firewall'))
-                                                        <x-icon name="shield" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'vlan'))
-                                                        <x-icon name="layers" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'maintenance') || str_contains($s->slug, 'monitoring'))
-                                                        <x-icon name="clock" class="h-3.5 w-3.5" />
-                                                    @elseif(str_contains($s->slug, 'dasar') || str_contains($s->slug, 'awal'))
-                                                        <x-icon name="cpu" class="h-3.5 w-3.5" />
-                                                    @else
-                                                        <x-icon name="topology" class="h-3.5 w-3.5" />
-                                                    @endif
-                                                </span>
-                                                <div class="min-w-0 flex-1">
-                                                    <span class="text-xs font-semibold leading-snug block group-hover/item:text-blue-700 transition-colors">
-                                                        {{ $s->title }}
-                                                    </span>
-                                                    @if(!empty($s->price_start))
-                                                        <span class="text-[10px] text-slate-400 block font-mono">Mulai {{ $s->price_start }}</span>
-                                                    @endif
-                                                </div>
-                                            </a>
-                                        @endforeach
+                                    {{-- 2. MODE EXPANDED: Dua kolom, 5 per kolom, ikon + nama lengkap + harga aktual --}}
+                                    <div class="services-expanded-view">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div class="space-y-1">
+                                                @foreach($chunks->get(0, collect()) as $s)
+                                                    <a href="{{ route('services.show', $s->slug) }}"
+                                                       class="group/item flex items-start gap-2.5 p-2 rounded-xl transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/80 text-blue-700' : 'text-slate-800 hover:text-blue-700 hover:bg-slate-50' }}">
+                                                        <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
+                                                            <x-icon name="{{ $getServiceIcon($s) }}" class="h-4 w-4" />
+                                                        </span>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-xs font-semibold leading-snug block text-slate-800 group-hover/item:text-blue-700 transition-colors">
+                                                                {{ $s->title }}
+                                                            </span>
+                                                            @if(!empty($s->price_start))
+                                                                <span class="text-[11px] text-slate-400 block font-mono mt-0.5">Mulai {{ $s->price_start }}</span>
+                                                            @endif
+                                                        </div>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+
+                                            <div class="space-y-1 border-l border-slate-100 pl-2">
+                                                @foreach($chunks->get(1, collect()) as $s)
+                                                    <a href="{{ route('services.show', $s->slug) }}"
+                                                       class="group/item flex items-start gap-2.5 p-2 rounded-xl transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50/80 text-blue-700' : 'text-slate-800 hover:text-blue-700 hover:bg-slate-50' }}">
+                                                        <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition-colors group-hover/item:bg-blue-600 group-hover/item:text-white">
+                                                            <x-icon name="{{ $getServiceIcon($s) }}" class="h-4 w-4" />
+                                                        </span>
+                                                        <div class="min-w-0 flex-1">
+                                                            <span class="text-xs font-semibold leading-snug block text-slate-800 group-hover/item:text-blue-700 transition-colors">
+                                                                {{ $s->title }}
+                                                            </span>
+                                                            @if(!empty($s->price_start))
+                                                                <span class="text-[11px] text-slate-400 block font-mono mt-0.5">Mulai {{ $s->price_start }}</span>
+                                                            @endif
+                                                        </div>
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+
+                                        {{-- Tombol Tampilkan Lebih Sedikit di bagian bawah expanded --}}
+                                        <div class="border-t border-slate-100 mt-2 pt-2 px-1">
+                                            <button type="button"
+                                                    id="desktop-services-collapse-btn"
+                                                    class="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold text-slate-500 hover:text-blue-700 hover:bg-slate-50 transition-colors cursor-pointer select-none">
+                                                <span>Tampilkan Lebih Sedikit</span>
+                                                <x-icon name="chevron-up" class="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -179,7 +245,7 @@
             <nav class="wrap py-4" aria-label="Navigasi seluler">
                 @foreach ($navItems as $item)
                     @if ($item['label'] === 'Layanan')
-                        <div class="border-b border-slate-100">
+                        <div class="border-b border-slate-100" id="mobile-services-container">
                             <button type="button"
                                     id="mobile-services-button"
                                     class="flex items-center justify-between w-full min-h-[3rem] px-2 text-left font-heading text-base font-bold text-navy-900 select-none cursor-pointer"
@@ -188,16 +254,45 @@
                                 <span class="{{ request()->routeIs('services.*') ? 'text-blue-700' : '' }}">Layanan</span>
                                 <x-icon name="chevron-down" id="mobile-services-chevron" class="h-4 w-4 text-slate-400 transition-transform duration-200" />
                             </button>
-                            <div id="mobile-services-submenu" hidden class="pb-3 pt-1 space-y-1 pl-2">
-                                @foreach($navServices as $s)
-                                    <a href="{{ route('services.show', $s->slug) }}"
-                                       class="flex items-center justify-between py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 hover:text-blue-700 hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50 text-blue-700' : '' }}">
-                                        <span class="truncate pr-2">{{ $s->title }}</span>
-                                        @if(!empty($s->price_start))
-                                            <span class="text-[10px] text-slate-400 font-mono shrink-0">{{ $s->price_start }}</span>
-                                        @endif
-                                    </a>
-                                @endforeach
+                            <div id="mobile-services-submenu" hidden class="pb-3 pt-1 pl-2">
+                                {{-- Compact mode on mobile: short names only, single column --}}
+                                <div id="mobile-services-compact" class="space-y-0.5">
+                                    @foreach($navServices as $s)
+                                        <a href="{{ route('services.show', $s->slug) }}"
+                                           class="flex items-center py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 hover:text-blue-700 hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50 text-blue-700' : '' }}">
+                                            <span class="truncate">{{ $getShortTitle($s) }}</span>
+                                        </a>
+                                    @endforeach
+                                </div>
+
+                                {{-- Expanded mode on mobile: icons, full titles, prices --}}
+                                <div id="mobile-services-expanded" class="space-y-1 hidden">
+                                    @foreach($navServices as $s)
+                                        <a href="{{ route('services.show', $s->slug) }}"
+                                           class="flex items-start gap-2.5 p-2 rounded-lg text-xs font-semibold text-slate-800 hover:text-blue-700 hover:bg-slate-50 transition-colors {{ request()->is('layanan/'.$s->slug) ? 'bg-blue-50 text-blue-700' : '' }}">
+                                            <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                                                <x-icon name="{{ $getServiceIcon($s) }}" class="h-3.5 w-3.5" />
+                                            </span>
+                                            <div class="min-w-0 flex-1">
+                                                <span class="block leading-snug">{{ $s->title }}</span>
+                                                @if(!empty($s->price_start))
+                                                    <span class="text-[10px] text-slate-400 font-mono mt-0.5 block">Mulai {{ $s->price_start }}</span>
+                                                @endif
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                </div>
+
+                                {{-- Mobile Toggle Button: Lihat Lainnya / Tampilkan Lebih Sedikit --}}
+                                <div class="pt-2 px-1">
+                                    <button type="button"
+                                            id="mobile-services-toggle-btn"
+                                            class="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:text-blue-700 hover:bg-slate-50 transition-colors cursor-pointer select-none">
+                                        <span id="mobile-services-toggle-text">Lihat Lainnya</span>
+                                        <x-icon name="chevron-down" id="mobile-services-toggle-chevron-down" class="h-3.5 w-3.5 text-slate-400" />
+                                        <x-icon name="chevron-up" id="mobile-services-toggle-chevron-up" class="h-3.5 w-3.5 text-slate-400 hidden" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     @else
